@@ -16,16 +16,14 @@ export default function App() {
 
   const loadUsers = async () => {
     try {
-      // GANTI localhost ke Environment Variable
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
-      const res = await fetch(`${backendUrl}/users`)
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"
+      const apiKey = import.meta.env.VITE_API_KEY || "learn"
+      const res = await fetch(`${backendUrl}/users?key=${apiKey}`)
       const data: ApiResponse<User[]> = await res.json()
-
-      // GUNAKAN ?? [] supaya kalau data kosong, tetap jadi array kosong (tidak undefined)
       setUsers(data?.data ?? [])
     } catch (error) {
       console.error("Failed to load users", error)
-      setUsers([]) // Set kosong jika error
+      setUsers([])
     }
   }
 
@@ -35,7 +33,7 @@ export default function App() {
 
   return (
     <div className="flex justify-center p-10">
-      <Card className="w-[600px]"> {/* Perbaikan penulisan w-150 ke w-[600px] */}
+      <Card className="w-150">
         <CardHeader>
           <CardTitle>User List</CardTitle>
         </CardHeader>
