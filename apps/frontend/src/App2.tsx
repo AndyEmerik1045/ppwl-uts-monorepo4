@@ -13,16 +13,36 @@ import { Button } from "@/components/ui/button"
 
 export default function App() {
   const [users, setUsers] = useState<User[]>([])
+  // PINDAHKAN KE SINI:
+  const [debugMessage, setDebugMessage] = useState<string>("Initializing...")
 
   const loadUsers = async () => {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"
       const apiKey = import.meta.env.VITE_API_KEY || "learn"
-      const res = await fetch(`${backendUrl}/users?key=${apiKey}`)
-      const data: ApiResponse<User[]> = await res.json()
-      setUsers(data?.data ?? [])
-    } catch (error) {
-      console.error("Failed to load users", error)
+      
+      setDebugMessage(`Mencoba fetch ke: ${backendUrl}/users?key=${apiKey}`)
+      
+      const res = await fetch(`${backendUrl}/users?key=${apiKey}`, {
+        credentials: "include" // Penting untuk Phase 3 & 4
+      })
+
+      if (!res.ok) {
+        setDebugMessage(`Gagal! Status: ${res.status}. Cek API Key di Vercel.`);
+        return;
+      }
+
+      const json: ApiResponse<User[]> = await res.json()
+      
+      if (json.data && json.data.length > 0) {
+        setUsers(json.data)
+        setDebugMessage(`Berhasil! Ditemukan ${json.data.length} user.`)
+      } else {
+        setUsers([])
+        setDebugMessage("Berhasil konek, tapi data di database KOSONG.")
+      }
+    } catch (error: any) {
+      setDebugMessage(`Koneksi Error: ${error.message}. Pastikan URL Backend benar & HTTPS.`)
       setUsers([])
     }
   }
@@ -32,7 +52,12 @@ export default function App() {
   }, [])
 
   return (
-    <div className="flex justify-center p-10">
+    <div className="flex flex-col items-center justify-center p-10 gap-4">
+      {/* Tampilan Debug Info */}
+      <div className="w-150 p-2 bg-slate-100 border border-slate-300 rounded text-[10px] font-mono break-all">
+        <span className="font-bold text-blue-600">Debug Log:</span> {debugMessage}
+      </div>
+
       <Card className="w-150">
         <CardHeader>
           <CardTitle>User List</CardTitle>
