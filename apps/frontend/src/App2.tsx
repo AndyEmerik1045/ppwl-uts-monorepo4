@@ -13,10 +13,8 @@ import { Button } from "@/components/ui/button"
 
 export default function App() {
   const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
 
   const loadUsers = async () => {
-    setLoading(true)
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"
       const apiKey = import.meta.env.VITE_API_KEY || "learn"
@@ -25,15 +23,13 @@ export default function App() {
         credentials: "include"
       })
 
-      if (!res.ok) throw new Error(`Server error: ${res.status}`)
+      if (!res.ok) return;
 
       const json: ApiResponse<User[]> = await res.json()
-      setUsers(json.data ?? [])
+      setUsers(json?.data ?? [])
     } catch (error) {
-      console.error("User List Error:", error)
+      console.error("Failed to load users", error)
       setUsers([])
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -42,23 +38,19 @@ export default function App() {
   }, [])
 
   return (
-    <div className="flex items-center justify-center p-10">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
-          <CardTitle className="text-2xl font-bold">User List</CardTitle>
-          <Button 
-            onClick={loadUsers} 
-            disabled={loading}
-            variant="outline"
-          >
-            {loading ? "Loading..." : "Refresh"}
-          </Button>
+    <div className="flex justify-center p-10">
+      <Card className="w-150">
+        <CardHeader>
+          <CardTitle>User List</CardTitle>
         </CardHeader>
         <CardContent>
+          <Button onClick={loadUsers} className="mb-4">
+            Refresh
+          </Button>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
+                <TableHead>ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
               </TableRow>
@@ -67,16 +59,14 @@ export default function App() {
               {users.length > 0 ? (
                 users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.id}</TableCell>
+                    <TableCell>{user.id}</TableCell>
                     <TableCell>{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                    {loading ? "Fetching data..." : "No users found."}
-                  </TableCell>
+                  <TableCell colSpan={3} className="text-center">No users found</TableCell>
                 </TableRow>
               )}
             </TableBody>
