@@ -13,37 +13,27 @@ import { Button } from "@/components/ui/button"
 
 export default function App() {
   const [users, setUsers] = useState<User[]>([])
-  // PINDAHKAN KE SINI:
-  const [debugMessage, setDebugMessage] = useState<string>("Initializing...")
+  const [loading, setLoading] = useState<boolean>(false)
 
   const loadUsers = async () => {
+    setLoading(true)
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"
       const apiKey = import.meta.env.VITE_API_KEY || "learn"
       
-      setDebugMessage(`Mencoba fetch ke: ${backendUrl}/users?key=${apiKey}`)
-      
       const res = await fetch(`${backendUrl}/users?key=${apiKey}`, {
-        credentials: "include" // Penting untuk Phase 3 & 4
+        credentials: "include"
       })
 
-      if (!res.ok) {
-        setDebugMessage(`Gagal! Status: ${res.status}. Cek API Key di Vercel.`);
-        return;
-      }
+      if (!res.ok) throw new Error(`Server error: ${res.status}`)
 
       const json: ApiResponse<User[]> = await res.json()
-      
-      if (json.data && json.data.length > 0) {
-        setUsers(json.data)
-        setDebugMessage(`Berhasil! Ditemukan ${json.data.length} user.`)
-      } else {
-        setUsers([])
-        setDebugMessage("Berhasil konek, tapi data di database KOSONG.")
-      }
-    } catch (error: any) {
-      setDebugMessage(`Koneksi Error: ${error.message}. Pastikan URL Backend benar & HTTPS.`)
+      setUsers(json.data ?? [])
+    } catch (error) {
+      console.error("User List Error:", error)
       setUsers([])
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -52,24 +42,23 @@ export default function App() {
   }, [])
 
   return (
-    <div className="flex flex-col items-center justify-center p-10 gap-4">
-      {/* Tampilan Debug Info */}
-      <div className="w-150 p-2 bg-slate-100 border border-slate-300 rounded text-[10px] font-mono break-all">
-        <span className="font-bold text-blue-600">Debug Log:</span> {debugMessage}
-      </div>
-
-      <Card className="w-150">
-        <CardHeader>
-          <CardTitle>User List</CardTitle>
+    <div className="flex items-center justify-center p-10">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
+          <CardTitle className="text-2xl font-bold">User List</CardTitle>
+          <Button 
+            onClick={loadUsers} 
+            disabled={loading}
+            variant="outline"
+          >
+            {loading ? "Loading..." : "Refresh"}
+          </Button>
         </CardHeader>
         <CardContent>
-          <Button onClick={loadUsers} className="mb-4">
-            Refresh
-          </Button>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
+                <TableHead className="w-[100px]">ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
               </TableRow>
@@ -78,14 +67,16 @@ export default function App() {
               {users.length > 0 ? (
                 users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell>{user.id}</TableCell>
+                    <TableCell className="font-medium">{user.id}</TableCell>
                     <TableCell>{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">No users found</TableCell>
+                  <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
+                    {loading ? "Fetching data..." : "No users found."}
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
